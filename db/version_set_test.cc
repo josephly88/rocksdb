@@ -537,7 +537,8 @@ TEST_F(VersionStorageInfoTest, ForcedBlobGCEmpty) {
 
   constexpr double age_cutoff = 0.5;
   constexpr double force_threshold = 0.75;
-  vstorage_.ComputeFilesMarkedForForcedBlobGC(age_cutoff, force_threshold);
+  vstorage_.ComputeFilesMarkedForForcedBlobGC(age_cutoff, force_threshold,
+                                              false, nullptr);
 
   ASSERT_TRUE(vstorage_.FilesMarkedForForcedBlobGC().empty());
 }
@@ -621,7 +622,8 @@ TEST_F(VersionStorageInfoTest, ForcedBlobGCSingleBatch) {
   {
     constexpr double age_cutoff = 0.1;
     constexpr double force_threshold = 0.0;
-    vstorage_.ComputeFilesMarkedForForcedBlobGC(age_cutoff, force_threshold);
+    vstorage_.ComputeFilesMarkedForForcedBlobGC(age_cutoff, force_threshold,
+                                              false, nullptr);
 
     ASSERT_TRUE(vstorage_.FilesMarkedForForcedBlobGC().empty());
   }
@@ -632,7 +634,8 @@ TEST_F(VersionStorageInfoTest, ForcedBlobGCSingleBatch) {
   {
     constexpr double age_cutoff = 0.5;
     constexpr double force_threshold = 0.0;
-    vstorage_.ComputeFilesMarkedForForcedBlobGC(age_cutoff, force_threshold);
+    vstorage_.ComputeFilesMarkedForForcedBlobGC(age_cutoff, force_threshold,
+                                              false, nullptr);
 
     ASSERT_TRUE(vstorage_.FilesMarkedForForcedBlobGC().empty());
   }
@@ -643,7 +646,8 @@ TEST_F(VersionStorageInfoTest, ForcedBlobGCSingleBatch) {
   {
     constexpr double age_cutoff = 1.0;
     constexpr double force_threshold = 0.6;
-    vstorage_.ComputeFilesMarkedForForcedBlobGC(age_cutoff, force_threshold);
+    vstorage_.ComputeFilesMarkedForForcedBlobGC(age_cutoff, force_threshold,
+                                              false, nullptr);
 
     ASSERT_TRUE(vstorage_.FilesMarkedForForcedBlobGC().empty());
   }
@@ -654,7 +658,8 @@ TEST_F(VersionStorageInfoTest, ForcedBlobGCSingleBatch) {
   {
     constexpr double age_cutoff = 1.0;
     constexpr double force_threshold = 0.5;
-    vstorage_.ComputeFilesMarkedForForcedBlobGC(age_cutoff, force_threshold);
+    vstorage_.ComputeFilesMarkedForForcedBlobGC(age_cutoff, force_threshold,
+                                              false, nullptr);
 
     auto ssts_to_be_compacted = vstorage_.FilesMarkedForForcedBlobGC();
     ASSERT_EQ(ssts_to_be_compacted.size(), 1);
@@ -768,7 +773,8 @@ TEST_F(VersionStorageInfoTest, ForcedBlobGCMultipleBatches) {
   {
     constexpr double age_cutoff = 0.1;
     constexpr double force_threshold = 0.0;
-    vstorage_.ComputeFilesMarkedForForcedBlobGC(age_cutoff, force_threshold);
+    vstorage_.ComputeFilesMarkedForForcedBlobGC(age_cutoff, force_threshold,
+                                              false, nullptr);
 
     ASSERT_TRUE(vstorage_.FilesMarkedForForcedBlobGC().empty());
   }
@@ -779,7 +785,8 @@ TEST_F(VersionStorageInfoTest, ForcedBlobGCMultipleBatches) {
   {
     constexpr double age_cutoff = 0.25;
     constexpr double force_threshold = 0.0;
-    vstorage_.ComputeFilesMarkedForForcedBlobGC(age_cutoff, force_threshold);
+    vstorage_.ComputeFilesMarkedForForcedBlobGC(age_cutoff, force_threshold,
+                                              false, nullptr);
 
     ASSERT_TRUE(vstorage_.FilesMarkedForForcedBlobGC().empty());
   }
@@ -790,7 +797,8 @@ TEST_F(VersionStorageInfoTest, ForcedBlobGCMultipleBatches) {
   {
     constexpr double age_cutoff = 0.5;
     constexpr double force_threshold = 0.6;
-    vstorage_.ComputeFilesMarkedForForcedBlobGC(age_cutoff, force_threshold);
+    vstorage_.ComputeFilesMarkedForForcedBlobGC(age_cutoff, force_threshold,
+                                              false, nullptr);
 
     ASSERT_TRUE(vstorage_.FilesMarkedForForcedBlobGC().empty());
   }
@@ -801,7 +809,8 @@ TEST_F(VersionStorageInfoTest, ForcedBlobGCMultipleBatches) {
   {
     constexpr double age_cutoff = 0.5;
     constexpr double force_threshold = 0.5;
-    vstorage_.ComputeFilesMarkedForForcedBlobGC(age_cutoff, force_threshold);
+    vstorage_.ComputeFilesMarkedForForcedBlobGC(age_cutoff, force_threshold,
+                                              false, nullptr);
 
     auto ssts_to_be_compacted = vstorage_.FilesMarkedForForcedBlobGC();
     ASSERT_EQ(ssts_to_be_compacted.size(), 2);
@@ -830,7 +839,8 @@ TEST_F(VersionStorageInfoTest, ForcedBlobGCMultipleBatches) {
   {
     constexpr double age_cutoff = 0.75;
     constexpr double force_threshold = 0.6;
-    vstorage_.ComputeFilesMarkedForForcedBlobGC(age_cutoff, force_threshold);
+    vstorage_.ComputeFilesMarkedForForcedBlobGC(age_cutoff, force_threshold,
+                                              false, nullptr);
 
     ASSERT_TRUE(vstorage_.FilesMarkedForForcedBlobGC().empty());
   }
@@ -841,7 +851,8 @@ TEST_F(VersionStorageInfoTest, ForcedBlobGCMultipleBatches) {
   {
     constexpr double age_cutoff = 0.75;
     constexpr double force_threshold = 0.5;
-    vstorage_.ComputeFilesMarkedForForcedBlobGC(age_cutoff, force_threshold);
+    vstorage_.ComputeFilesMarkedForForcedBlobGC(age_cutoff, force_threshold,
+                                              false, nullptr);
 
     auto ssts_to_be_compacted = vstorage_.FilesMarkedForForcedBlobGC();
     ASSERT_EQ(ssts_to_be_compacted.size(), 2);

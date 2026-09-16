@@ -18,6 +18,7 @@
 #include "rocksdb/listener.h"
 #include "table/internal_iterator.h"
 #include "test_util/sync_point.h"
+#include "rocksdb/file_system.h"
 
 namespace ROCKSDB_NAMESPACE {
 CompactionIterator::CompactionIterator(
@@ -1200,6 +1201,17 @@ uint64_t CompactionIterator::ComputeBlobGarbageCollectionCutoffFileNumber(
   assert(storage_info);
 
   const auto& blob_files = storage_info->GetBlobFiles();
+
+  if (compaction->real_compaction() != nullptr) {
+    const Compaction* real = compaction->real_compaction();
+    if (real->mutable_cf_options()->enable_z_cutoff &&
+        real->immutable_options()->fs) {
+      uint64_t min_ybiz = 0;
+      if (real->immutable_options()->fs->GetMinFullBlobYBIZ(&min_ybiz).ok()) {
+        return min_ybiz + 1;
+      }
+    }
+  }
 
   const size_t cutoff_index = static_cast<size_t>(
       compaction->blob_garbage_collection_age_cutoff() * blob_files.size());

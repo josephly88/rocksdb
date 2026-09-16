@@ -124,6 +124,7 @@ TEST_F(OptionsTest, GetOptionsFromMapTest) {
       {"enable_blob_garbage_collection", "true"},
       {"blob_garbage_collection_age_cutoff", "0.5"},
       {"blob_garbage_collection_force_threshold", "0.75"},
+      {"enable_z_cutoff", "true"},
       {"blob_compaction_readahead_size", "256K"},
       {"blob_file_starting_level", "1"},
       {"bottommost_temperature", "kWarm"},
@@ -263,6 +264,7 @@ TEST_F(OptionsTest, GetOptionsFromMapTest) {
   ASSERT_EQ(new_cf_opt.enable_blob_garbage_collection, true);
   ASSERT_EQ(new_cf_opt.blob_garbage_collection_age_cutoff, 0.5);
   ASSERT_EQ(new_cf_opt.blob_garbage_collection_force_threshold, 0.75);
+  ASSERT_EQ(new_cf_opt.enable_z_cutoff, true);
   ASSERT_EQ(new_cf_opt.blob_compaction_readahead_size, 262144);
   ASSERT_EQ(new_cf_opt.blob_file_starting_level, 1);
   ASSERT_EQ(new_cf_opt.bottommost_temperature, Temperature::kWarm);
@@ -2353,6 +2355,7 @@ TEST_F(OptionsOldApiTest, GetOptionsFromMapTest) {
       {"enable_blob_garbage_collection", "true"},
       {"blob_garbage_collection_age_cutoff", "0.5"},
       {"blob_garbage_collection_force_threshold", "0.75"},
+      {"enable_z_cutoff", "true"},
       {"blob_compaction_readahead_size", "256K"},
       {"blob_file_starting_level", "1"},
       {"bottommost_temperature", "kWarm"},
@@ -2486,6 +2489,7 @@ TEST_F(OptionsOldApiTest, GetOptionsFromMapTest) {
   ASSERT_EQ(new_cf_opt.enable_blob_garbage_collection, true);
   ASSERT_EQ(new_cf_opt.blob_garbage_collection_age_cutoff, 0.5);
   ASSERT_EQ(new_cf_opt.blob_garbage_collection_force_threshold, 0.75);
+  ASSERT_EQ(new_cf_opt.enable_z_cutoff, true);
   ASSERT_EQ(new_cf_opt.blob_compaction_readahead_size, 262144);
   ASSERT_EQ(new_cf_opt.blob_file_starting_level, 1);
   ASSERT_EQ(new_cf_opt.bottommost_temperature, Temperature::kWarm);

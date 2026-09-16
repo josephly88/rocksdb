@@ -65,6 +65,7 @@ class Writer;
 
 class BlobIndex;
 class Compaction;
+class FileSystem;
 class LogBuffer;
 class LookupKey;
 class MemTable;
@@ -190,7 +191,8 @@ class VersionStorageInfo {
   // REQUIRES: DB mutex held
   void ComputeFilesMarkedForForcedBlobGC(
       double blob_garbage_collection_age_cutoff,
-      double blob_garbage_collection_force_threshold);
+      double blob_garbage_collection_force_threshold, bool enable_z_cutoff,
+      FileSystem* fs);
 
   bool level0_non_overlapping() const {
     return level0_non_overlapping_;

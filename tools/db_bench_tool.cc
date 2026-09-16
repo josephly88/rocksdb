@@ -1064,6 +1064,10 @@ DEFINE_double(blob_garbage_collection_force_threshold,
               "[Integrated BlobDB] The threshold for the ratio of garbage in "
               "the oldest blob files for forcing garbage collection.");
 
+DEFINE_bool(enable_z_cutoff, false,
+            "[Same-Victim] Use ZenFS min YBIZ as BlobGC cutoff (Z_Cutoff). "
+            "Requires ZENFS_BAZA=1 for BAZA+.");
+
 DEFINE_uint64(blob_compaction_readahead_size,
               ROCKSDB_NAMESPACE::AdvancedColumnFamilyOptions()
                   .blob_compaction_readahead_size,
@@ -3731,6 +3735,8 @@ class Benchmark {
     if (FLAGS_statistics) {
       fprintf(stdout, "STATISTICS:\n%s\n", dbstats->ToString().c_str());
     }
+    fprintf(stdout, "ZCcopy blob bytes: %" PRIu64 "\n",
+            FLAGS_env->GetFileSystem()->GetBlobZcCopyBytes());
     if (FLAGS_simcache_size >= 0) {
       fprintf(
           stdout, "SIMULATOR CACHE STATISTICS:\n%s\n",
@@ -4477,6 +4483,7 @@ class Benchmark {
         FLAGS_blob_garbage_collection_age_cutoff;
     options.blob_garbage_collection_force_threshold =
         FLAGS_blob_garbage_collection_force_threshold;
+    options.enable_z_cutoff = FLAGS_enable_z_cutoff;
     options.blob_compaction_readahead_size =
         FLAGS_blob_compaction_readahead_size;
     options.blob_file_starting_level = FLAGS_blob_file_starting_level;

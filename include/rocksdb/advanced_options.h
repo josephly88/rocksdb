@@ -932,6 +932,17 @@ struct AdvancedColumnFamilyOptions {
   // Dynamically changeable through the SetOptions() API
   double blob_garbage_collection_force_threshold = 1.0;
 
+  // Same-Victim Z_Cutoff: when true, BlobGC victim cutoff uses the minimum
+  // Youngest Blob Index in Zone (YBIZ) from ZenFS instead of
+  // blob_garbage_collection_age_cutoff * number_of_blob_files. Requires
+  // BAZA blob placement (ZENFS_BAZA=1). Falls back to the age cutoff when
+  // no full blob zone exists yet.
+  //
+  // Default: false
+  //
+  // Dynamically changeable through the SetOptions() API
+  bool enable_z_cutoff = false;
+
   // Compaction readahead for blob files.
   //
   // Default: 0

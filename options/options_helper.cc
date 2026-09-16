@@ -252,6 +252,7 @@ void UpdateColumnFamilyOptions(const MutableCFOptions& moptions,
       moptions.blob_garbage_collection_age_cutoff;
   cf_opts->blob_garbage_collection_force_threshold =
       moptions.blob_garbage_collection_force_threshold;
+  cf_opts->enable_z_cutoff = moptions.enable_z_cutoff;
   cf_opts->blob_compaction_readahead_size =
       moptions.blob_compaction_readahead_size;
   cf_opts->blob_file_starting_level = moptions.blob_file_starting_level;

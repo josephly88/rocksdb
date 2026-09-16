@@ -47,6 +47,7 @@
 #include "file/read_write_util.h"
 #include "file/writable_file_writer.h"
 #include "logging/logging.h"
+#include "rocksdb/file_system.h"
 #include "monitoring/file_read_sample.h"
 #include "monitoring/perf_context_imp.h"
 #include "monitoring/persistent_stats_history.h"
@@ -2839,7 +2840,8 @@ void VersionStorageInfo::ComputeCompactionScore(
       mutable_cf_options.blob_garbage_collection_force_threshold < 1.0) {
     ComputeFilesMarkedForForcedBlobGC(
         mutable_cf_options.blob_garbage_collection_age_cutoff,
-        mutable_cf_options.blob_garbage_collection_force_threshold);
+        mutable_cf_options.blob_garbage_collection_force_threshold,
+        mutable_cf_options.enable_z_cutoff, immutable_options.fs.get());
   }
 
   EstimateCompactionBytesNeeded(mutable_cf_options);
@@ -2953,7 +2955,8 @@ void VersionStorageInfo::ComputeFilesMarkedForPeriodicCompaction(
 
 void VersionStorageInfo::ComputeFilesMarkedForForcedBlobGC(
     double blob_garbage_collection_age_cutoff,
-    double blob_garbage_collection_force_threshold) {
+    double blob_garbage_collection_force_threshold, bool enable_z_cutoff,
+    FileSystem* fs) {
   files_marked_for_forced_blob_gc_.clear();
 
   if (blob_files_.empty()) {
@@ -2961,8 +2964,24 @@ void VersionStorageInfo::ComputeFilesMarkedForForcedBlobGC(
   }
 
   // Number of blob files eligible for GC based on age
-  const size_t cutoff_count = static_cast<size_t>(
-      blob_garbage_collection_age_cutoff * blob_files_.size());
+  size_t cutoff_count = 0;
+  if (enable_z_cutoff && fs != nullptr) {
+    uint64_t min_ybiz = 0;
+    if (fs->GetMinFullBlobYBIZ(&min_ybiz).ok()) {
+      const uint64_t cutoff_file_number = min_ybiz + 1;
+      for (const auto& meta : blob_files_) {
+        if (meta->GetBlobFileNumber() < cutoff_file_number) {
+          ++cutoff_count;
+        } else {
+          break;
+        }
+      }
+    }
+  }
+  if (cutoff_count == 0) {
+    cutoff_count = static_cast<size_t>(blob_garbage_collection_age_cutoff *
+                                       blob_files_.size());
+  }
   if (!cutoff_count) {
     return;
   }

@@ -681,6 +681,15 @@ class FileSystem : public Customizable {
     return IOStatus::OK();
   }
 
+  // Same-Victim Z_Cutoff: youngest blob file number in the oldest full blob
+  // zone (YBIZ). Default is NotSupported for filesystems that are not ZenFS.
+  virtual IOStatus GetMinFullBlobYBIZ(uint64_t* /*min_ybiz*/) {
+    return IOStatus::NotSupported("GetMinFullBlobYBIZ");
+  }
+
+  // Blob bytes copied by ZenFS zone cleaning (ZCcopy). Zero for other FSs.
+  virtual uint64_t GetBlobZcCopyBytes() const { return 0; }
+
   // If you're adding methods here, remember to add them to EnvWrapper too.
 
  private:
@@ -1523,6 +1532,14 @@ class FileSystemWrapper : public FileSystem {
 
   virtual IOStatus AbortIO(std::vector<void*>& io_handles) override {
     return target_->AbortIO(io_handles);
+  }
+
+  IOStatus GetMinFullBlobYBIZ(uint64_t* min_ybiz) override {
+    return target_->GetMinFullBlobYBIZ(min_ybiz);
+  }
+
+  uint64_t GetBlobZcCopyBytes() const override {
+    return target_->GetBlobZcCopyBytes();
   }
 
  protected:

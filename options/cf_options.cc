@@ -443,6 +443,10 @@ static std::unordered_map<std::string, OptionTypeInfo>
                    blob_garbage_collection_force_threshold),
           OptionType::kDouble, OptionVerificationType::kNormal,
           OptionTypeFlags::kMutable}},
+        {"enable_z_cutoff",
+         {offsetof(struct MutableCFOptions, enable_z_cutoff),
+          OptionType::kBoolean, OptionVerificationType::kNormal,
+          OptionTypeFlags::kMutable}},
         {"blob_compaction_readahead_size",
          {offsetof(struct MutableCFOptions, blob_compaction_readahead_size),
           OptionType::kUInt64T, OptionVerificationType::kNormal,
@@ -1080,6 +1084,8 @@ void MutableCFOptions::Dump(Logger* log) const {
                  blob_garbage_collection_age_cutoff);
   ROCKS_LOG_INFO(log, "  blob_garbage_collection_force_threshold: %f",
                  blob_garbage_collection_force_threshold);
+  ROCKS_LOG_INFO(log, "                         enable_z_cutoff: %s",
+                 enable_z_cutoff ? "true" : "false");
   ROCKS_LOG_INFO(log, "           blob_compaction_readahead_size: %" PRIu64,
                  blob_compaction_readahead_size);
   ROCKS_LOG_INFO(log, "                 blob_file_starting_level: %d",
