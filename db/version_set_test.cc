@@ -10,7 +10,9 @@
 #include "db/version_set.h"
 
 #include <algorithm>
+#include <map>
 
+#include "db/blob/z_cutoff.h"
 #include "db/db_impl/db_impl.h"
 #include "db/db_test_util.h"
 #include "db/log_writer.h"
@@ -872,6 +874,89 @@ TEST_F(VersionStorageInfoTest, ForcedBlobGCMultipleBatches) {
     ASSERT_EQ(ssts_to_be_compacted[0], expected_ssts_to_be_compacted[0]);
     ASSERT_EQ(ssts_to_be_compacted[1], expected_ssts_to_be_compacted[1]);
   }
+}
+
+TEST(ZCutoffEquationTest, PaperEquationExcludesYbizFile) {
+  size_t cutoff = 0;
+  // Oldest index 1, min YBIZ 4, 20 files -> (4 - 1) / 20, 3 victims.
+  ASSERT_TRUE(ZCutoffVictimCount(4, 1, 20, &cutoff));
+  ASSERT_EQ(cutoff, 3u);
+  // After that prefix is gone: oldest 5, min YBIZ 9, 16 files -> 4 victims.
+  ASSERT_TRUE(ZCutoffVictimCount(9, 5, 16, &cutoff));
+  ASSERT_EQ(cutoff, 4u);
+  ASSERT_FALSE(ZCutoffVictimCount(4, 4, 16, &cutoff));
+  ASSERT_FALSE(ZCutoffVictimCount(3, 5, 16, &cutoff));
+  // Numerator larger than N is clamped to N.
+  ASSERT_TRUE(ZCutoffVictimCount(100, 1, 4, &cutoff));
+  ASSERT_EQ(cutoff, 4u);
+}
+
+class Equation1FileSystem : public FileSystemWrapper {
+ public:
+  Equation1FileSystem() : FileSystemWrapper(FileSystem::Default()) {}
+  const char* Name() const override { return "Equation1FileSystem"; }
+
+  IOStatus GetMinFullBlobYBIZ(uint64_t* min_ybiz) override {
+    if (!has_ybiz_) {
+      return IOStatus::NotSupported("no full blob zone");
+    }
+    *min_ybiz = min_ybiz_;
+    return IOStatus::OK();
+  }
+
+  IOStatus GetBlobCreationIndex(uint64_t file_number, uint64_t* index) override {
+    auto it = index_.find(file_number);
+    if (it == index_.end()) {
+      return IOStatus::NotFound("blob creation index");
+    }
+    *index = it->second;
+    return IOStatus::OK();
+  }
+
+  bool has_ybiz_ = false;
+  uint64_t min_ybiz_ = 0;
+  std::map<uint64_t, uint64_t> index_;
+};
+
+TEST_F(VersionStorageInfoTest, ForcedBlobGCZCutoffUsesCreationIndex) {
+  // File numbers have gaps. Creation indexes are 1..4. Equation (1) with
+  // min YBIZ 3 and oldest index 1 selects 2 files, not (120 - 100).
+  constexpr int level = 0;
+  constexpr uint64_t sst1 = 1;
+  constexpr uint64_t sst2 = 2;
+  constexpr uint64_t b100 = 100;
+  constexpr uint64_t b110 = 110;
+  constexpr uint64_t b120 = 120;
+  constexpr uint64_t b130 = 130;
+
+  Add(level, sst1, "a", "m", 1000, b100);
+  Add(level, sst2, "n", "z", 1000, b120);
+
+  AddBlob(b100, 10, 1000, BlobFileMetaData::LinkedSsts{sst1}, 10, 1000);
+  AddBlob(b110, 10, 1000, BlobFileMetaData::LinkedSsts{}, 10, 1000);
+  AddBlob(b120, 10, 1000, BlobFileMetaData::LinkedSsts{sst2}, 10, 1000);
+  AddBlob(b130, 10, 1000, BlobFileMetaData::LinkedSsts{}, 10, 1000);
+  UpdateVersionStorageInfo();
+
+  Equation1FileSystem fs;
+  fs.index_ = {{b100, 1}, {b110, 2}, {b120, 3}, {b130, 4}};
+  fs.has_ybiz_ = true;
+  fs.min_ybiz_ = 3;
+
+  constexpr double age_cutoff = 0.1;
+  constexpr double force_threshold = 0.0;
+  vstorage_.ComputeFilesMarkedForForcedBlobGC(age_cutoff, force_threshold,
+                                              true, &fs);
+
+  auto marked = vstorage_.FilesMarkedForForcedBlobGC();
+  ASSERT_EQ(marked.size(), 1);
+  ASSERT_EQ(marked[0].second->fd.GetNumber(), sst1);
+
+  // No full zone: fall back to the age cutoff. 0.1 * 4 == 0, so nothing.
+  fs.has_ybiz_ = false;
+  vstorage_.ComputeFilesMarkedForForcedBlobGC(age_cutoff, force_threshold,
+                                              true, &fs);
+  ASSERT_TRUE(vstorage_.FilesMarkedForForcedBlobGC().empty());
 }
 
 class VersionStorageInfoTimestampTest : public VersionStorageInfoTestBase {

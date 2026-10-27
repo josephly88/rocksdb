@@ -11,6 +11,7 @@
 #include "db/blob/blob_fetcher.h"
 #include "db/blob/blob_file_builder.h"
 #include "db/blob/blob_index.h"
+#include "db/blob/z_cutoff.h"
 #include "db/blob/prefetch_buffer_collection.h"
 #include "db/snapshot_checker.h"
 #include "logging/logging.h"
@@ -1204,12 +1205,14 @@ uint64_t CompactionIterator::ComputeBlobGarbageCollectionCutoffFileNumber(
 
   if (compaction->real_compaction() != nullptr) {
     const Compaction* real = compaction->real_compaction();
+    size_t z_cutoff_index = 0;
     if (real->mutable_cf_options()->enable_z_cutoff &&
-        real->immutable_options()->fs) {
-      uint64_t min_ybiz = 0;
-      if (real->immutable_options()->fs->GetMinFullBlobYBIZ(&min_ybiz).ok()) {
-        return min_ybiz + 1;
+        TryZCutoffVictimCount(real->immutable_options()->fs.get(), blob_files,
+                              &z_cutoff_index)) {
+      if (z_cutoff_index >= blob_files.size()) {
+        return std::numeric_limits<uint64_t>::max();
       }
+      return blob_files[z_cutoff_index]->GetBlobFileNumber();
     }
   }
 

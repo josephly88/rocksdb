@@ -681,10 +681,18 @@ class FileSystem : public Customizable {
     return IOStatus::OK();
   }
 
-  // Same-Victim Z_Cutoff: youngest blob file number in the oldest full blob
-  // zone (YBIZ). Default is NotSupported for filesystems that are not ZenFS.
+  // Same-Victim Z_Cutoff: smallest dense blob creation index among the
+  // youngest blob file of each full blob zone (min YBIZ). Not a RocksDB
+  // file number. Default is NotSupported for filesystems that are not ZenFS.
   virtual IOStatus GetMinFullBlobYBIZ(uint64_t* /*min_ybiz*/) {
     return IOStatus::NotSupported("GetMinFullBlobYBIZ");
+  }
+
+  // Dense creation index (1, 2, 3, ...) assigned to this blob file by ZenFS.
+  // Default is NotSupported for filesystems that are not ZenFS.
+  virtual IOStatus GetBlobCreationIndex(uint64_t /*file_number*/,
+                                        uint64_t* /*index*/) {
+    return IOStatus::NotSupported("GetBlobCreationIndex");
   }
 
   // Blob bytes copied by ZenFS zone cleaning (ZCcopy). Zero for other FSs.
@@ -1536,6 +1544,10 @@ class FileSystemWrapper : public FileSystem {
 
   IOStatus GetMinFullBlobYBIZ(uint64_t* min_ybiz) override {
     return target_->GetMinFullBlobYBIZ(min_ybiz);
+  }
+
+  IOStatus GetBlobCreationIndex(uint64_t file_number, uint64_t* index) override {
+    return target_->GetBlobCreationIndex(file_number, index);
   }
 
   uint64_t GetBlobZcCopyBytes() const override {

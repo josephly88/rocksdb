@@ -23,6 +23,7 @@
 #include "db/blob/blob_fetcher.h"
 #include "db/blob/blob_file_cache.h"
 #include "db/blob/blob_file_reader.h"
+#include "db/blob/z_cutoff.h"
 #include "db/blob/blob_index.h"
 #include "db/blob/blob_log_format.h"
 #include "db/compaction/compaction.h"
@@ -2963,22 +2964,11 @@ void VersionStorageInfo::ComputeFilesMarkedForForcedBlobGC(
     return;
   }
 
-  // Number of blob files eligible for GC based on age
+  // Number of blob files eligible for GC. Z_Cutoff uses paper Equation (1):
+  // (min YBIZ - oldest live blob creation index) / N. Otherwise the age cutoff.
   size_t cutoff_count = 0;
-  if (enable_z_cutoff && fs != nullptr) {
-    uint64_t min_ybiz = 0;
-    if (fs->GetMinFullBlobYBIZ(&min_ybiz).ok()) {
-      const uint64_t cutoff_file_number = min_ybiz + 1;
-      for (const auto& meta : blob_files_) {
-        if (meta->GetBlobFileNumber() < cutoff_file_number) {
-          ++cutoff_count;
-        } else {
-          break;
-        }
-      }
-    }
-  }
-  if (cutoff_count == 0) {
+  if (!(enable_z_cutoff &&
+        TryZCutoffVictimCount(fs, blob_files_, &cutoff_count))) {
     cutoff_count = static_cast<size_t>(blob_garbage_collection_age_cutoff *
                                        blob_files_.size());
   }

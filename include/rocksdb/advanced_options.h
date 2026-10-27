@@ -932,11 +932,14 @@ struct AdvancedColumnFamilyOptions {
   // Dynamically changeable through the SetOptions() API
   double blob_garbage_collection_force_threshold = 1.0;
 
-  // Same-Victim Z_Cutoff: when true, BlobGC victim cutoff uses the minimum
-  // Youngest Blob Index in Zone (YBIZ) from ZenFS instead of
-  // blob_garbage_collection_age_cutoff * number_of_blob_files. Requires
-  // BAZA blob placement (ZENFS_BAZA=1). Falls back to the age cutoff when
-  // no full blob zone exists yet.
+  // Same-Victim Z_Cutoff (paper Equation 1). When true, the BlobGC age
+  // cutoff ratio is (min YBIZ - oldest live blob creation index) / N,
+  // where both indexes are dense blob creation indexes from ZenFS and N is
+  // the number of live blob files. The victim count is that numerator, so
+  // the blob file whose index equals the minimum YBIZ is not a victim.
+  // Requires BAZA placement (ZENFS_BAZA=1). Falls back to
+  // blob_garbage_collection_age_cutoff when no full blob zone exists, or
+  // when the minimum YBIZ is not newer than the oldest live blob.
   //
   // Default: false
   //

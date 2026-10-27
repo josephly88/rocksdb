@@ -1065,7 +1065,8 @@ DEFINE_double(blob_garbage_collection_force_threshold,
               "the oldest blob files for forcing garbage collection.");
 
 DEFINE_bool(enable_z_cutoff, false,
-            "[Same-Victim] Use ZenFS min YBIZ as BlobGC cutoff (Z_Cutoff). "
+            "[Same-Victim] BlobGC cutoff ratio is "
+            "(min YBIZ - oldest live blob index) / N. "
             "Requires ZENFS_BAZA=1 for BAZA+.");
 
 DEFINE_uint64(blob_compaction_readahead_size,
